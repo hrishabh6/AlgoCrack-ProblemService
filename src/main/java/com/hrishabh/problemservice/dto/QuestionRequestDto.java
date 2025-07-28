@@ -14,6 +14,7 @@ public class QuestionRequestDto {
     private String questionTitle;
     private String questionDescription;
     private List<TestCaseDto> testCases;
+    private List<QuestionMetadataDto> metadataList;
     private Boolean isOutputOrderMatters;
     private List<TagDto> tags;
     private String difficultyLevel;

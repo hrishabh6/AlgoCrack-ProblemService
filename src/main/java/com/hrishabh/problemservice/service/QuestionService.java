@@ -26,9 +26,8 @@ public class QuestionService {
 
     @Transactional
     public ResponseEntity<CreateQuestionResponseDto> saveQuestion(QuestionRequestDto dto) {
-            Map<String, Object> response = new HashMap<>();
 
-        // ✅ Basic validation
+        // ✅ Validate required fields
         if (dto.getQuestionTitle() == null || dto.getQuestionTitle().isBlank()) {
             return ResponseEntity.badRequest().body(
                     CreateQuestionResponseDto.builder()
@@ -45,6 +44,42 @@ public class QuestionService {
             );
         }
 
+        if (dto.getMetadataList() == null || dto.getMetadataList().isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    CreateQuestionResponseDto.builder()
+                            .message("At least one metadata entry is required")
+                            .build()
+            );
+        }
+
+        for (QuestionMetadataDto meta : dto.getMetadataList()) {
+            if (meta.getFunctionName() == null || meta.getReturnType() == null ||
+                    meta.getParamTypes() == null || meta.getParamNames() == null ||
+                    meta.getParamTypes().size() != meta.getParamNames().size()) {
+                return ResponseEntity.badRequest().body(
+                        CreateQuestionResponseDto.builder()
+                                .message("Invalid metadata: parameter names/types must be non-null and size must match")
+                                .build()
+                );
+            }
+        }
+
+        // ✅ Validate tags exist in DB
+        List<Tag> tags = new ArrayList<>();
+        if (dto.getTags() != null && !dto.getTags().isEmpty()) {
+            for (TagDto tagDto : dto.getTags()) {
+                Optional<Tag> existing = tagRepository.findByName(tagDto.getName());
+                if (existing.isEmpty()) {
+                    return ResponseEntity.badRequest().body(
+                            CreateQuestionResponseDto.builder()
+                                    .message("Tag does not exist: " + tagDto.getName())
+                                    .build()
+                    );
+                }
+                tags.add(existing.get());
+            }
+        }
+
         // ✅ Create Question
         Question question = Question.builder()
                 .questionTitle(dto.getQuestionTitle())
@@ -54,9 +89,10 @@ public class QuestionService {
                 .company(dto.getCompany())
                 .constraints(dto.getConstraints())
                 .timeoutLimit(dto.getTimeoutLimit())
+                .tags(tags)
                 .build();
 
-        // ✅ Map and Attach TestCases
+        // ✅ Map and attach test cases
         List<TestCase> testCases = dto.getTestCases().stream().map(tc ->
                 TestCase.builder()
                         .input(tc.getInput())
@@ -69,7 +105,7 @@ public class QuestionService {
 
         question.setTestCases(testCases);
 
-        // ✅ Map and Attach Solutions
+        // ✅ Map and attach solutions
         List<Solution> solutions = dto.getSolution() != null ? dto.getSolution().stream().map(sol ->
                 Solution.builder()
                         .code(sol.getCode())
@@ -80,15 +116,24 @@ public class QuestionService {
 
         question.setSolutions(solutions);
 
-        // ✅ Handle Tags (re-use if already exists)
-        List<Tag> tags = dto.getTags() != null ? dto.getTags().stream().map(tagDto -> {
-            return tagRepository.findByName(tagDto.getName())
-                    .orElseGet(() -> tagRepository.save(Tag.builder().name(tagDto.getName()).build()));
-        }).collect(Collectors.toList()) : new ArrayList<>();
+        // ✅ Map and attach metadata
+        List<QuestionMetadata> metadataList = dto.getMetadataList().stream().map(md ->
+                QuestionMetadata.builder()
+                        .functionName(md.getFunctionName())
+                        .returnType(md.getReturnType())
+                        .paramTypes(md.getParamTypes())
+                        .paramNames(md.getParamNames())
+                        .language(md.getLanguage())
+                        .codeTemplate(md.getCodeTemplate())
+                        .executionStrategy(md.getExecutionStrategy())
+                        .customInputEnabled(md.getCustomInputEnabled())
+                        .question(question)
+                        .build()
+        ).collect(Collectors.toList());
 
-        question.setTags(tags);
+        question.setMetadataList(metadataList);
 
-        // ✅ Save question with cascaded data
+        // ✅ Save everything
         Question savedQuestion = questionsRepository.save(question);
 
         return ResponseEntity.ok(
@@ -98,6 +143,7 @@ public class QuestionService {
                         .build()
         );
     }
+
 
     public QuestionResponseDto getQuestionById(Long id) {
         Question question = questionsRepository.findById(id)
