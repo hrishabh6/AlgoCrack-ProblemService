@@ -1,9 +1,11 @@
 package com.hrishabh.problemservice.controllers;
 
-import com.hrishabh.problemservice.dto.CreateQuestionRequestDto;
+import com.hrishabh.problemservice.dto.QuestionRequestDto;
 import com.hrishabh.problemservice.dto.CreateQuestionResponseDto;
+import com.hrishabh.problemservice.dto.QuestionResponseDto;
 import com.hrishabh.problemservice.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +22,35 @@ public class ProblemsController {
 
     @PostMapping
     public ResponseEntity<CreateQuestionResponseDto> createQuestion(
-            @RequestBody CreateQuestionRequestDto requestDto
+            @RequestBody QuestionRequestDto requestDto
     ) {
         return questionService.saveQuestion(requestDto);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<QuestionResponseDto> getQuestionById(@PathVariable Long id) {
+        QuestionResponseDto dto = questionService.getQuestionById(id);
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteQuestion(@PathVariable Long id) {
+        try {
+            questionService.deleteQuestionById(id);
+            return ResponseEntity.ok("Question deleted successfully.");
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<QuestionResponseDto> updateQuestion(
+            @PathVariable Long id,
+            @RequestBody QuestionRequestDto updateDto
+    ) {
+        QuestionResponseDto updatedQuestion = questionService.updateQuestion(id, updateDto);
+        return ResponseEntity.ok(updatedQuestion);
+    }
+
+
 }
