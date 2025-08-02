@@ -1,33 +1,27 @@
-# ---- Stage 1: Build with Gradle ----
-FROM gradle:8.5-jdk17 AS builder
+# -- Stage 1: Build with OpenJDK 24 and Gradle installed manually --
+FROM openjdk:24-jdk-bullseye AS builder
+
+RUN apt-get update && apt-get install -y wget unzip && \
+    wget https://services.gradle.org/distributions/gradle-8.5-bin.zip && \
+    unzip gradle-8.5-bin.zip -d /opt && \
+    ln -s /opt/gradle-8.5/bin/gradle /usr/bin/gradle
 
 WORKDIR /app
 
-# Copy only what's present in your repo
-COPY build.gradle .
-COPY settings.gradle .
-COPY gradlew .
+# Copy all project files first
+COPY build.gradle settings.gradle gradlew ./
 COPY gradle/ ./gradle/
-
-# Run Gradle once to cache dependencies
-RUN ./gradlew build --no-daemon || return 0
-
-# Copy the rest of the app
+RUN chmod +x gradlew
 COPY . .
 
-# Build the JAR (skipping tests for speed)
+# Now, run the Gradle build command
 RUN ./gradlew build --no-daemon -x test
 
-# ---- Stage 2: Run the app ----
-FROM eclipse-temurin:17-jdk-alpine
+# -- Stage 2: Runtime using JDK 24 --
+FROM openjdk:24-jdk-bullseye
 
 WORKDIR /app
-
-# Copy the generated JAR
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Expose app port (for docs)
 EXPOSE 8080
-
-# Run the JAR with Render's dynamic PORT
 CMD ["sh", "-c", "java -jar app.jar --server.port=$PORT"]
