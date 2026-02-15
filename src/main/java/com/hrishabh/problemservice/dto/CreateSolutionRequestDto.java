@@ -1,23 +1,22 @@
 package com.hrishabh.problemservice.dto;
 
-import com.hrishabh.algocrackentityservice.models.TestCaseType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class TestCaseRequestDto {
+public class CreateSolutionRequestDto {
     @NotNull(message = "Question ID is required")
     private Long questionId;
 
-    @NotBlank(message = "Input is required")
-    private String input;
+    @NotBlank(message = "Code is required")
+    private String code;
 
-    @NotNull(message = "Type is required")
-    private TestCaseType type;
+    @NotBlank(message = "Language is required")
+    private String language;
+
+    private String explanation;
 }
-

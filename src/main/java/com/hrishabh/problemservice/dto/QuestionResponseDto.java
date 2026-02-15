@@ -1,5 +1,6 @@
 package com.hrishabh.problemservice.dto;
 
+import com.hrishabh.algocrackentityservice.models.NodeType;
 import lombok.*;
 
 import java.util.List;
@@ -18,4 +19,8 @@ public class QuestionResponseDto {
     private String difficultyLevel;
     private String company;
     private String constraints;
+    private Integer timeoutLimit;
+    private NodeType nodeType;
+    private List<TestCaseResponseDto> defaultTestcases;
+    private List<QuestionMetadataDto> metadataList;
 }

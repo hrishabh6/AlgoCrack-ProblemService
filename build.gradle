@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.hrishabh'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.2-SNAPSHOT'
 
 java {
     toolchain {
@@ -21,22 +21,33 @@ configurations {
 
 repositories {
     mavenCentral()
-//    mavenLocal()
+    mavenLocal()
     maven { url 'https://jitpack.io' }
 }
 
 dependencies {
+    // Spring Boot starters
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
+    // Lombok
     compileOnly 'org.projectlombok:lombok'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
+    
+    // Development
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    
+    // Database
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    
+    // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-//    implementation 'com.hrishabh:AlgoCrack-EntityService:0.0.5-SNAPSHOT'
-    implementation 'com.github.hrishabh6:AlgoCrack-EntityService:v1.0:plain'
-
+    
+    // Entity Service - Updated version with new entities
+        implementation 'com.hrishabh:AlgoCrack-EntityService:0.1.4-SNAPSHOT'
 }
 
 tasks.named('test') {

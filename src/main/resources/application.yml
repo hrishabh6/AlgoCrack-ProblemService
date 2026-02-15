@@ -1,0 +1,37 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: AlgoCrack-ProblemService
+    
+  datasource:
+    url: jdbc:mysql://localhost:3306/leetcode
+    username: ${DB_USERNAME:root}
+    password: hrishabh@123
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        
+  flyway:
+    enabled: false
+
+# Actuator for health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# Logging
+logging:
+  level:
+    com.hrishabh.problemservice: DEBUG

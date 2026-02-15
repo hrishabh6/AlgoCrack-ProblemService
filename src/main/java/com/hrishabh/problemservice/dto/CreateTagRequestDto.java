@@ -1,5 +1,6 @@
 package com.hrishabh.problemservice.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Getter
@@ -8,7 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CreateTagRequestDto {
+    @NotBlank(message = "Tag name is required")
     private String name;
+    
     private String description;
 }
-

@@ -1,5 +1,7 @@
 package com.hrishabh.problemservice.dto;
 
+import com.hrishabh.algocrackentityservice.models.TestCaseType;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Getter
@@ -8,8 +10,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TestCaseDto {
+    @NotBlank(message = "Input is required")
     private String input;
-    private String expectedOutput;
-    private Integer orderIndex;
-    private Boolean isHidden;
+
+    // Type is optional here - inferred from parent array (defaultTestcases →
+    // DEFAULT, hiddenTestcases → HIDDEN)
+    private TestCaseType type;
 }
