@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.repository;
 
-import com.hrishabh.algocrackentityservice.models.Question;
+import com.hrishabh.problemservice.models.Question;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

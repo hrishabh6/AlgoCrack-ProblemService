@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.service;
 
-import com.hrishabh.algocrackentityservice.models.*;
+import com.hrishabh.problemservice.models.*;
 import com.hrishabh.problemservice.dto.*;
 import com.hrishabh.problemservice.exceptions.ResourceNotFoundException;
 import com.hrishabh.problemservice.repository.*;

@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.dto;
 
-import com.hrishabh.algocrackentityservice.models.TestCaseType;
+import com.hrishabh.problemservice.models.TestCaseType;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 

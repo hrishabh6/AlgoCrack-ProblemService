@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.service;
 
-import com.hrishabh.algocrackentityservice.models.Tag;
+import com.hrishabh.problemservice.models.Tag;
 import com.hrishabh.problemservice.dto.CreateTagRequestDto;
 import com.hrishabh.problemservice.dto.TagResponseDto;
 import com.hrishabh.problemservice.exceptions.ResourceNotFoundException;

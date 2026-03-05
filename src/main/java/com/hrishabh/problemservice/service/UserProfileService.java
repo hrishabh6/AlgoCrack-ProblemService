@@ -1,7 +1,7 @@
 package com.hrishabh.problemservice.service;
 
-import com.hrishabh.algocrackentityservice.models.Submission;
-import com.hrishabh.algocrackentityservice.models.User;
+import com.hrishabh.problemservice.models.Submission;
+import com.hrishabh.problemservice.models.User;
 import com.hrishabh.problemservice.dto.HeatmapDto;
 import com.hrishabh.problemservice.dto.UserProfileDto;
 import com.hrishabh.problemservice.repository.QuestionsRepository;

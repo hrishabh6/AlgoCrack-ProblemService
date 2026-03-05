@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.repository;
 
-import com.hrishabh.algocrackentityservice.models.Tag;
+import com.hrishabh.problemservice.models.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;

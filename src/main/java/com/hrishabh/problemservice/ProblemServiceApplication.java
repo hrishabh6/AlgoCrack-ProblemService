@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EntityScan("com.hrishabh.algocrackentityservice.models")
+@EntityScan("com.hrishabh.problemservice.models")
 @EnableJpaRepositories("com.hrishabh.problemservice.repository")
 @EnableJpaAuditing
 public class ProblemServiceApplication {

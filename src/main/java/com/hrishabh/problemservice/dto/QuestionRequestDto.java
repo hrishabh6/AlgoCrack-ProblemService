@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.dto;
 
-import com.hrishabh.algocrackentityservice.models.NodeType;
+import com.hrishabh.problemservice.models.NodeType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;

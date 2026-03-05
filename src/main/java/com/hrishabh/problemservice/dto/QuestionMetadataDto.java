@@ -1,7 +1,7 @@
 package com.hrishabh.problemservice.dto;
 
 
-import com.hrishabh.algocrackentityservice.models.Language;
+import com.hrishabh.problemservice.models.Language;
 import lombok.*;
 
 import java.util.List;

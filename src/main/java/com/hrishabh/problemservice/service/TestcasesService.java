@@ -1,8 +1,8 @@
 package com.hrishabh.problemservice.service;
 
-import com.hrishabh.algocrackentityservice.models.Question;
-import com.hrishabh.algocrackentityservice.models.TestCase;
-import com.hrishabh.algocrackentityservice.models.TestCaseType;
+import com.hrishabh.problemservice.models.Question;
+import com.hrishabh.problemservice.models.TestCase;
+import com.hrishabh.problemservice.models.TestCaseType;
 import com.hrishabh.problemservice.dto.TestCaseRequestDto;
 import com.hrishabh.problemservice.dto.TestCaseResponseDto;
 import com.hrishabh.problemservice.exceptions.ResourceNotFoundException;

@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.controllers;
 
-import com.hrishabh.algocrackentityservice.models.TestCaseType;
+import com.hrishabh.problemservice.models.TestCaseType;
 import com.hrishabh.problemservice.dto.TestCaseRequestDto;
 import com.hrishabh.problemservice.dto.TestCaseResponseDto;
 import com.hrishabh.problemservice.service.TestcasesService;

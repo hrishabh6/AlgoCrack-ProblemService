@@ -1,7 +1,7 @@
 package com.hrishabh.problemservice.service;
 
-import com.hrishabh.algocrackentityservice.models.Question;
-import com.hrishabh.algocrackentityservice.models.Solution;
+import com.hrishabh.problemservice.models.Question;
+import com.hrishabh.problemservice.models.Solution;
 import com.hrishabh.problemservice.dto.CreateSolutionRequestDto;
 import com.hrishabh.problemservice.dto.SolutionResponseDto;
 import com.hrishabh.problemservice.dto.UpdateSolutionRequestDto;

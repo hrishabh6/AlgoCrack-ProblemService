@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.dto;
 
-import com.hrishabh.algocrackentityservice.models.Language;
+import com.hrishabh.problemservice.models.Language;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;

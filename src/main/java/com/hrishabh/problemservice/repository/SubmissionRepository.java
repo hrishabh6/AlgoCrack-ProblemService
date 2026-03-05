@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.repository;
 
-import com.hrishabh.algocrackentityservice.models.Submission;
+import com.hrishabh.problemservice.models.Submission;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,6 +1,6 @@
 package com.hrishabh.problemservice.repository;
 
-import com.hrishabh.algocrackentityservice.models.ReferenceSolution;
+import com.hrishabh.problemservice.models.ReferenceSolution;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

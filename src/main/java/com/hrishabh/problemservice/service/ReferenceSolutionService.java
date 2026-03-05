@@ -1,7 +1,7 @@
 package com.hrishabh.problemservice.service;
 
-import com.hrishabh.algocrackentityservice.models.Question;
-import com.hrishabh.algocrackentityservice.models.ReferenceSolution;
+import com.hrishabh.problemservice.models.Question;
+import com.hrishabh.problemservice.models.ReferenceSolution;
 import com.hrishabh.problemservice.dto.ReferenceSolutionDto;
 import com.hrishabh.problemservice.exceptions.ResourceNotFoundException;
 import com.hrishabh.problemservice.repository.QuestionsRepository;
