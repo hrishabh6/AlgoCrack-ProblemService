@@ -1,6 +1,7 @@
 package com.hrishabh.problemservice.controllers;
 
 import com.hrishabh.problemservice.dto.*;
+import com.hrishabh.problemservice.repository.QuestionMetadataRepository;
 import com.hrishabh.problemservice.service.QuestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.List;
 public class ProblemsController {
 
     private final QuestionService questionService;
+    private final QuestionMetadataRepository questionMetadataRepository;
 
     /**
      * List questions with pagination and filtering
@@ -81,5 +83,44 @@ public class ProblemsController {
             @Valid @RequestBody QuestionRequestDto updateDto) {
         QuestionResponseDto updatedQuestion = questionService.updateQuestion(id, updateDto);
         return ResponseEntity.ok(updatedQuestion);
+    }
+
+    // ── Inter-Service API (Phase 7) ──────────────────────────────────
+
+    /**
+     * Get question metadata for a specific language.
+     * Called by SubmissionService for code execution setup.
+     * Flattens QuestionMetadata + parent Question fields into one DTO.
+     */
+    @GetMapping("/{questionId}/metadata")
+    public ResponseEntity<QuestionMetadataApiDto> getMetadata(
+            @PathVariable Long questionId,
+            @RequestParam String language) {
+        com.hrishabh.problemservice.models.Language lang =
+                com.hrishabh.problemservice.models.Language.valueOf(language.toUpperCase());
+        com.hrishabh.problemservice.models.QuestionMetadata qm = questionMetadataRepository
+                .findByQuestionIdAndLanguage(questionId, lang)
+                .orElseThrow(() -> new RuntimeException(
+                        "Metadata not found for questionId: " + questionId + ", language: " + language));
+        com.hrishabh.problemservice.models.Question q = qm.getQuestion();
+
+        return ResponseEntity.ok(QuestionMetadataApiDto.builder()
+                .id(qm.getId())
+                .questionId(questionId)
+                .functionName(qm.getFunctionName())
+                .returnType(qm.getReturnType())
+                .language(qm.getLanguage().name())
+                .codeTemplate(qm.getCodeTemplate())
+                .testCaseFormat(qm.getTestCaseFormat())
+                .executionStrategy(qm.getExecutionStrategy())
+                .paramTypes(qm.getParamTypes())
+                .paramNames(qm.getParamNames())
+                .mutationTarget(qm.getMutationTarget())
+                .serializationStrategy(qm.getSerializationStrategy())
+                .questionType(qm.getQuestionType())
+                .isOutputOrderMatters(q != null ? q.getIsOutputOrderMatters() : null)
+                .nodeType(q != null && q.getNodeType() != null ? q.getNodeType().name() : null)
+                .validationHints(q != null ? q.getValidationHints() : null)
+                .build());
     }
 }
