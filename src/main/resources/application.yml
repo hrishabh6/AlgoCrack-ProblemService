@@ -35,3 +35,10 @@ management:
 logging:
   level:
     com.hrishabh.problemservice: DEBUG
+
+# Cross-service API URLs
+services:
+  auth:
+    base-url: http://localhost:8085
+  submission:
+    base-url: http://localhost:8082
