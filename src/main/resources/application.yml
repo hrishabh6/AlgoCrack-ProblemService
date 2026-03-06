@@ -6,7 +6,7 @@ spring:
     name: AlgoCrack-ProblemService
     
   datasource:
-    url: jdbc:mysql://localhost:3306/leetcode
+    url: jdbc:mysql://localhost:3306/problem_db
     username: ${DB_USERNAME:root}
     password: hrishabh@123
 
@@ -19,7 +19,10 @@ spring:
         format_sql: true
         
   flyway:
-    enabled: false
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
 
 # Actuator for health checks
 management:
