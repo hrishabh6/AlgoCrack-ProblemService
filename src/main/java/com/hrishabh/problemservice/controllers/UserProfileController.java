@@ -49,10 +49,12 @@ public class UserProfileController {
     @GetMapping("/heatmap/{userId}")
     public ResponseEntity<?> getHeatmap(
             @PathVariable String userId,
-            @RequestParam(required = false) Integer year) {
-        log.info("Fetching heatmap for user: {}, year: {}", userId, year);
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to) {
+        log.info("Fetching heatmap for user: {}, year: {}, from: {}, to: {}", userId, year, from, to);
         try {
-            HeatmapDto heatmap = userProfileService.getHeatmap(userId, year);
+            HeatmapDto heatmap = userProfileService.getHeatmap(userId, year, from, to);
             return ResponseEntity.ok(heatmap);
         } catch (IllegalArgumentException e) {
             // Invalid year value

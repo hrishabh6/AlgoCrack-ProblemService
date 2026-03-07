@@ -69,6 +69,7 @@ public class UserProfileDto {
     @AllArgsConstructor
     public static class RecentSubmission {
         private String submissionId;
+        private Long questionId;
         private String questionTitle;
         private String questionSlug;
         private String verdict;

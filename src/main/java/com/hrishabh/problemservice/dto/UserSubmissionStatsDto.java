@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import java.util.List;
 
@@ -16,9 +17,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserSubmissionStatsDto {
-    private long solvedEasy;
-    private long solvedMedium;
-    private long solvedHard;
+    @JsonAlias({"totalSolved", "solvedTotal"})
+    private long totalSolved;
+    @JsonAlias({"easySolved", "solvedEasy"})
+    private long easySolved;
+    @JsonAlias({"mediumSolved", "solvedMedium"})
+    private long mediumSolved;
+    @JsonAlias({"hardSolved", "solvedHard"})
+    private long hardSolved;
 
     private List<LanguageStat> languageStats;
 
