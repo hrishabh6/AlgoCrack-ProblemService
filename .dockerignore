@@ -3,5 +3,4 @@ build/
 *.log
 .git
 .gitignore
-Dockerfile
 README.md
