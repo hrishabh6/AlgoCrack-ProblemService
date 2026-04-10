@@ -1,14 +1,16 @@
 server:
-  port: 8084
+  port: ${SERVER_PORT:8084}
 
 spring:
   application:
     name: AlgoCrack-ProblemService
     
   datasource:
-    url: jdbc:mysql://localhost:3306/problem_db
-    username: ${DB_USERNAME:root}
-    password: hrishabh@123
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      initialization-fail-timeout: ${SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT:0}
 
   jpa:
     hibernate:
@@ -20,6 +22,7 @@ spring:
         
   flyway:
     enabled: true
+    connect-retries: ${SPRING_FLYWAY_CONNECT_RETRIES:10}
     baseline-on-migrate: true
     baseline-version: 1
     locations: classpath:db/migration
@@ -42,6 +45,6 @@ logging:
 # Cross-service API URLs
 services:
   auth:
-    base-url: ${AUTH_SERVICE_BASE_URL:http://localhost:7483}
+    base-url: ${AUTH_SERVICE_BASE_URL:http://auth-service:7483}
   submission:
-    base-url: ${SUBMISSION_SERVICE_BASE_URL:http://localhost:8080}
+    base-url: ${SUBMISSION_SERVICE_URL:http://submission-service:8080}
