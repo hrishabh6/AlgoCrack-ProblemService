@@ -46,6 +46,20 @@ logging:
   level:
     com.hrishabh.problemservice: INFO
 
+# Problem of the Day scheduler (UTC). Job is off unless explicitly enabled.
+potd:
+  scheduler:
+    enabled: false
+    zone-id: UTC
+    cron: "0 0 15 * * ?"
+    draft-horizon-days: 45
+    published-low-water-days: 14
+    published-warn-days: 21
+    exact-cooldown-days: 14
+    emergency-min-cooldown-days: 3
+    family-cooldown-days: 30
+    scheduler-version: potd-planner-v1
+
 # Cross-service API URLs
 services:
   auth:

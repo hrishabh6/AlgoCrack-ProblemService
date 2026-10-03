@@ -3,6 +3,8 @@ package com.hrishabh.problemservice.service;
 import com.hrishabh.problemservice.client.SubmissionServiceClient;
 import com.hrishabh.problemservice.models.*;
 import com.hrishabh.problemservice.dto.*;
+import com.hrishabh.problemservice.dailychallenge.repository.DailyChallengeRepository;
+import com.hrishabh.problemservice.exceptions.ConflictException;
 import com.hrishabh.problemservice.exceptions.ResourceNotFoundException;
 import com.hrishabh.problemservice.repository.*;
 import jakarta.transaction.Transactional;
@@ -26,6 +28,7 @@ public class QuestionService {
     private final TagRepository tagRepository;
     private final ReferenceSolutionRepository referenceSolutionRepository;
     private final SubmissionServiceClient submissionServiceClient;
+    private final DailyChallengeRepository dailyChallengeRepository;
 
     /**
      * List questions with pagination, filtering and sorting.
@@ -289,6 +292,9 @@ public class QuestionService {
     public void deleteQuestionById(Long id) {
         if (!questionsRepository.existsById(id)) {
             throw new RuntimeException("Question not found with ID: " + id);
+        }
+        if (dailyChallengeRepository.existsByQuestionId(id)) {
+            throw new ConflictException("Question is assigned to a daily challenge and cannot be deleted");
         }
         questionsRepository.deleteById(id);
     }
