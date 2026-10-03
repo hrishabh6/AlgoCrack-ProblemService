@@ -35,4 +35,27 @@ public interface DailyChallengeRepository extends JpaRepository<DailyChallenge, 
             @Param("status") DailyChallengeStatus status);
 
     boolean existsByQuestionId(Long questionId);
+
+    @Query("""
+            SELECT dc FROM DailyChallenge dc
+            JOIN FETCH dc.question q
+            LEFT JOIN FETCH q.tags
+            WHERE dc.challengeDate BETWEEN :from AND :to
+            AND (:status IS NULL OR dc.status = :status)
+            ORDER BY dc.challengeDate ASC
+            """)
+    List<DailyChallenge> findAdminRange(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("status") DailyChallengeStatus status);
+
+    @Query("""
+            SELECT dc FROM DailyChallenge dc
+            JOIN FETCH dc.question
+            WHERE dc.challengeDate BETWEEN :from AND :to
+            ORDER BY dc.challengeDate ASC
+            """)
+    List<DailyChallenge> findByChallengeDateBetweenOrderByChallengeDateAsc(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
 }

@@ -22,4 +22,14 @@ public class DailyChallengeExceptionHandler {
         body.put("code", PotdNotScheduledException.CODE);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
+
+    @ExceptionHandler(PotdUnprocessableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnprocessable(PotdUnprocessableException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        body.put("error", HttpStatus.UNPROCESSABLE_ENTITY.getReasonPhrase());
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+    }
 }
