@@ -1,5 +1,6 @@
 package com.hrishabh.problemservice.client;
 
+import com.hrishabh.problemservice.dto.AcceptedSubmissionDayDto;
 import com.hrishabh.problemservice.dto.HeatmapApiDto;
 import com.hrishabh.problemservice.dto.QuestionStatsApiDto;
 import com.hrishabh.problemservice.dto.StreakDto;
@@ -105,6 +106,24 @@ public class SubmissionServiceClient {
                 .toUriString();
         log.debug("Fetching streak: {}", url);
         return restTemplate.getForObject(url, StreakDto.class);
+    }
+
+    /** Fetch accepted problem/date facts so ProblemService can match its POTD schedule. */
+    public List<AcceptedSubmissionDayDto> getAcceptedSubmissionDays(
+            String userId, LocalDate from, LocalDate to) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl(baseUrl + "/api/v1/submissions/stats/{userId}/accepted-days")
+                .queryParam("from", from)
+                .queryParam("to", to)
+                .buildAndExpand(userId)
+                .toUriString();
+        log.debug("Fetching accepted submission days: {}", url);
+        List<AcceptedSubmissionDayDto> response = restTemplate.exchange(
+                url,
+                org.springframework.http.HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<AcceptedSubmissionDayDto>>() {}).getBody();
+        return response == null ? List.of() : response;
     }
 
     /**
