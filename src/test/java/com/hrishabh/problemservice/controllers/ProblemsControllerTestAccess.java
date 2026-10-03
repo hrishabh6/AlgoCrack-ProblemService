@@ -11,4 +11,9 @@ public final class ProblemsControllerTestAccess {
     public static QuestionQuery buildQuery(String tags, String tag) {
         return ProblemsController.buildQuery(0, 20, null, tag, tags, null, null, null, null);
     }
+
+    public static QuestionQuery buildExcludeQuery(String excludeDifficulty, String excludeTags) {
+        return ProblemsController.buildQuery(0, 20, null, null, null, excludeDifficulty, excludeTags, null, null, null,
+                null);
+    }
 }

@@ -28,10 +28,12 @@ public class ProblemsController {
     /**
      * List questions with pagination, filtering and sorting.
      *
-     * @param tags  comma-separated tag names; a problem must carry all of them
-     * @param tag   single tag (kept for backward compatibility, merged into {@code tags})
-     * @param sort  {@code id} (default), {@code title} or {@code difficulty}
-     * @param order {@code asc} (default) or {@code desc}
+     * @param tags               comma-separated tag names; a problem must carry all of them
+     * @param tag                single tag (kept for backward compatibility, merged into {@code tags})
+     * @param excludeDifficulty  problems must not have this difficulty
+     * @param excludeTags        comma-separated tag names; a problem must carry none of them
+     * @param sort               {@code id} (default), {@code title} or {@code difficulty}
+     * @param order              {@code asc} (default) or {@code desc}
      */
     @GetMapping
     public ResponseEntity<Page<QuestionSummaryDto>> listQuestions(
@@ -40,37 +42,51 @@ public class ProblemsController {
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String tags,
+            @RequestParam(required = false) String excludeDifficulty,
+            @RequestParam(required = false) String excludeTags,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String company,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String order) {
-        QuestionQuery query = buildQuery(page, size, difficulty, tag, tags, search, company, sort, order);
+        QuestionQuery query = buildQuery(page, size, difficulty, tag, tags, excludeDifficulty, excludeTags, search,
+                company, sort, order);
         return ResponseEntity.ok(questionService.listQuestions(query));
     }
 
     static QuestionQuery buildQuery(int page, int size, String difficulty, String tag, String tags,
             String search, String company, String sort, String order) {
-        Set<String> tagNames = new LinkedHashSet<>();
-        if (tags != null) {
-            Arrays.stream(tags.split(","))
-                    .map(String::trim)
-                    .filter(t -> !t.isEmpty())
-                    .limit(MAX_TAG_FILTERS)
-                    .forEach(tagNames::add);
-        }
-        if (tag != null && !tag.isBlank()) {
-            tagNames.add(tag.trim());
-        }
+        return buildQuery(page, size, difficulty, tag, tags, null, null, search, company, sort, order);
+    }
+
+    static QuestionQuery buildQuery(int page, int size, String difficulty, String tag, String tags,
+            String excludeDifficulty, String excludeTags, String search, String company, String sort, String order) {
         return QuestionQuery.builder()
                 .page(page)
                 .size(size)
                 .difficulty(difficulty)
-                .tags(new ArrayList<>(tagNames))
+                .tags(parseTagNames(tags, tag))
+                .excludeDifficulty(excludeDifficulty)
+                .excludeTags(parseTagNames(excludeTags, null))
                 .search(search)
                 .company(company)
                 .sort(sort)
                 .order(order)
                 .build();
+    }
+
+    private static List<String> parseTagNames(String csv, String extra) {
+        Set<String> names = new LinkedHashSet<>();
+        if (csv != null) {
+            Arrays.stream(csv.split(","))
+                    .map(String::trim)
+                    .filter(t -> !t.isEmpty())
+                    .limit(MAX_TAG_FILTERS)
+                    .forEach(names::add);
+        }
+        if (extra != null && !extra.isBlank()) {
+            names.add(extra.trim());
+        }
+        return new ArrayList<>(names);
     }
 
     /**

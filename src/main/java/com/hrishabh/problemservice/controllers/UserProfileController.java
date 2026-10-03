@@ -52,12 +52,14 @@ public class UserProfileController {
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String tags,
+            @RequestParam(required = false) String excludeDifficulty,
+            @RequestParam(required = false) String excludeTags,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String order) {
         String uid = CurrentUser.require(userId);
-        QuestionQuery query = ProblemsController.buildQuery(page, size, difficulty, tag, tags, search, null, sort,
-                order);
+        QuestionQuery query = ProblemsController.buildQuery(page, size, difficulty, tag, tags, excludeDifficulty,
+                excludeTags, search, null, sort, order);
         if ("solved".equalsIgnoreCase(status) || "unsolved".equalsIgnoreCase(status)) {
             Set<Long> solved = new HashSet<>(userProfileService.getSolvedQuestionIds(uid));
             boolean wantSolved = "solved".equalsIgnoreCase(status);
