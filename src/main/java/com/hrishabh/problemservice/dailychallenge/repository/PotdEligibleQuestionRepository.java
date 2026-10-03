@@ -14,7 +14,6 @@ public interface PotdEligibleQuestionRepository extends JpaRepository<Question, 
             SELECT DISTINCT q FROM Question q
             INNER JOIN PotdProblemMetadata m ON m.question.id = q.id
             LEFT JOIN FETCH q.tags
-            LEFT JOIN FETCH m.primaryTag
             WHERE q.status = com.hrishabh.problemservice.models.QuestionStatus.PUBLISHED
               AND m.eligible = true
               AND m.curationStatus = com.hrishabh.problemservice.dailychallenge.model.PotdCurationStatus.APPROVED
