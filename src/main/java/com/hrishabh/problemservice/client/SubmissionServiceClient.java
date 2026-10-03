@@ -1,5 +1,6 @@
 package com.hrishabh.problemservice.client;
 
+import com.hrishabh.problemservice.dto.AcceptedSubmissionDayDto;
 import com.hrishabh.problemservice.dto.HeatmapApiDto;
 import com.hrishabh.problemservice.dto.QuestionStatsApiDto;
 import com.hrishabh.problemservice.dto.StreakDto;
@@ -8,6 +9,9 @@ import com.hrishabh.problemservice.dto.UserSubmissionStatsDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -36,6 +40,12 @@ public class SubmissionServiceClient {
         this.baseUrl = baseUrl;
     }
 
+    private static HttpEntity<Void> internalServiceRequest() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Internal-Call", "true");
+        return new HttpEntity<>(headers);
+    }
+
     /**
      * Fetch submission stats for a user.
      * Replaces: SubmissionRepository.countDistinctSolvedByUserIdAndDifficulty() etc.
@@ -43,7 +53,9 @@ public class SubmissionServiceClient {
     public UserSubmissionStatsDto getStats(String userId) {
         String url = baseUrl + "/api/v1/submissions/stats/" + userId;
         log.debug("Fetching submission stats: {}", url);
-        return restTemplate.getForObject(url, UserSubmissionStatsDto.class);
+        return restTemplate
+                .exchange(url, HttpMethod.GET, internalServiceRequest(), UserSubmissionStatsDto.class)
+                .getBody();
     }
 
     /**
@@ -55,8 +67,8 @@ public class SubmissionServiceClient {
         try {
             return restTemplate.exchange(
                     url,
-                    org.springframework.http.HttpMethod.GET,
-                    null,
+                    HttpMethod.GET,
+                    internalServiceRequest(),
                     new ParameterizedTypeReference<List<Long>>() {}).getBody();
         } catch (RestClientException e) {
             log.warn("Failed to fetch solved question IDs for {}: {}", userId, e.getMessage());
@@ -104,7 +116,27 @@ public class SubmissionServiceClient {
                 .buildAndExpand(userId)
                 .toUriString();
         log.debug("Fetching streak: {}", url);
-        return restTemplate.getForObject(url, StreakDto.class);
+        return restTemplate
+                .exchange(url, HttpMethod.GET, internalServiceRequest(), StreakDto.class)
+                .getBody();
+    }
+
+    /** Fetch accepted problem/date facts so ProblemService can match its POTD schedule. */
+    public List<AcceptedSubmissionDayDto> getAcceptedSubmissionDays(
+            String userId, LocalDate from, LocalDate to) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl(baseUrl + "/api/v1/submissions/stats/{userId}/accepted-days")
+                .queryParam("from", from)
+                .queryParam("to", to)
+                .buildAndExpand(userId)
+                .toUriString();
+        log.debug("Fetching accepted submission days: {}", url);
+        List<AcceptedSubmissionDayDto> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                internalServiceRequest(),
+                new ParameterizedTypeReference<List<AcceptedSubmissionDayDto>>() {}).getBody();
+        return response == null ? List.of() : response;
     }
 
     /**
@@ -122,8 +154,8 @@ public class SubmissionServiceClient {
         try {
             return restTemplate.exchange(
                     url,
-                    org.springframework.http.HttpMethod.GET,
-                    null,
+                    HttpMethod.GET,
+                    internalServiceRequest(),
                     new ParameterizedTypeReference<List<SubmissionSummaryApiDto>>() {})
                     .getBody();
         } catch (RestClientException e) {
@@ -160,7 +192,9 @@ public class SubmissionServiceClient {
                 .toUriString();
 
         log.debug("Fetching heatmap data: {}", url);
-        HeatmapApiDto response = restTemplate.getForObject(url, HeatmapApiDto.class);
+        HeatmapApiDto response = restTemplate
+                .exchange(url, HttpMethod.GET, internalServiceRequest(), HeatmapApiDto.class)
+                .getBody();
 
         if (response != null) {
             response.setYear(year != null ? year : from.getYear());
