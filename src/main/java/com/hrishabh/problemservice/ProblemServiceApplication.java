@@ -7,8 +7,14 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EntityScan("com.hrishabh.problemservice.models")
-@EnableJpaRepositories("com.hrishabh.problemservice.repository")
+@EntityScan({
+        "com.hrishabh.problemservice.models",
+        "com.hrishabh.problemservice.dailychallenge.model"
+})
+@EnableJpaRepositories({
+        "com.hrishabh.problemservice.repository",
+        "com.hrishabh.problemservice.dailychallenge.repository"
+})
 @EnableJpaAuditing
 public class ProblemServiceApplication {
 

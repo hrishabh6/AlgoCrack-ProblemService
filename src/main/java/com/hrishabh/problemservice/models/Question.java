@@ -77,4 +77,9 @@ public class Question extends BaseModel {
      * Comma-separated, nullable. e.g. "SUDOKU_RULES,EXPECT_LINEAR_FORM"
      */
     private String validationHints;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private QuestionStatus status = QuestionStatus.PUBLISHED;
 }
