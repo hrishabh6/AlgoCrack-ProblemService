@@ -1,5 +1,6 @@
 package com.hrishabh.problemservice.service;
 
+import com.hrishabh.problemservice.client.SubmissionServiceClient;
 import com.hrishabh.problemservice.models.*;
 import com.hrishabh.problemservice.dto.*;
 import com.hrishabh.problemservice.exceptions.ResourceNotFoundException;
@@ -7,6 +8,7 @@ import com.hrishabh.problemservice.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,28 +25,83 @@ public class QuestionService {
     private final QuestionsRepository questionsRepository;
     private final TagRepository tagRepository;
     private final ReferenceSolutionRepository referenceSolutionRepository;
+    private final SubmissionServiceClient submissionServiceClient;
 
     /**
-     * List questions with pagination and filtering
+     * List questions with pagination, filtering and sorting.
      */
-    public Page<QuestionSummaryDto> listQuestions(int page, int size, String difficulty, String tag, String search,
-            String company) {
+    public Page<QuestionSummaryDto> listQuestions(QuestionQuery query) {
+        return listQuestions(query, null, null);
+    }
+
+    /**
+     * List questions, optionally restricted to ({@code includeIds}) or excluding ({@code excludeIds})
+     * a set of question ids, e.g. a user's solved problems.
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Page<QuestionSummaryDto> listQuestions(QuestionQuery query, Collection<Long> includeIds,
+            Collection<Long> excludeIds) {
+        int page = Math.max(0, query.getPage());
+        int size = Math.min(Math.max(1, query.getSize()), QuestionQuery.MAX_PAGE_SIZE);
+        if (includeIds != null && includeIds.isEmpty()) {
+            return Page.empty(PageRequest.of(page, size));
+        }
+
+        boolean ascending = !"desc".equalsIgnoreCase(query.getOrder());
+        Sort.Direction direction = ascending ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String sortKey = query.getSort() == null ? "id" : query.getSort().toLowerCase(Locale.ROOT);
+
         Specification<Question> spec = Specification
-                .where(QuestionSpecification.hasDifficulty(difficulty))
-                .and(QuestionSpecification.hasTag(tag))
-                .and(QuestionSpecification.titleContains(search))
-                .and(QuestionSpecification.hasCompany(company));
+                .where(QuestionSpecification.hasDifficulty(query.getDifficulty()))
+                .and(QuestionSpecification.hasAllTags(query.getTags()))
+                .and(QuestionSpecification.titleOrIdMatches(query.getSearch()))
+                .and(QuestionSpecification.hasCompany(query.getCompany()))
+                .and(QuestionSpecification.idIn(includeIds))
+                .and(QuestionSpecification.idNotIn(excludeIds));
 
-        Page<Question> questions = questionsRepository.findAll(spec,
-                PageRequest.of(page, size, Sort.by("id").descending()));
+        PageRequest pageRequest;
+        switch (sortKey) {
+            case "title" -> pageRequest = PageRequest.of(page, size,
+                    Sort.by(direction, "questionTitle").and(Sort.by("id")));
+            case "difficulty" -> {
+                spec = spec.and(QuestionSpecification.orderByDifficulty(ascending));
+                pageRequest = PageRequest.of(page, size);
+            }
+            default -> pageRequest = PageRequest.of(page, size, Sort.by(direction, "id"));
+        }
 
-        return questions.map(q -> QuestionSummaryDto.builder()
-                .id(q.getId())
-                .questionTitle(q.getQuestionTitle())
-                .difficultyLevel(q.getDifficultyLevel())
-                .tags(q.getTags().stream().map(Tag::getName).collect(Collectors.toList()))
-                .company(q.getCompany())
-                .build());
+        Page<Question> questions = questionsRepository.findAll(spec, pageRequest);
+        List<QuestionSummaryDto> content = toSummaries(questions.getContent());
+        return new PageImpl<>(content, questions.getPageable(), questions.getTotalElements());
+    }
+
+    /**
+     * Map questions to table rows, preserving order. Acceptance stats are fetched from
+     * SubmissionService in one batched call; they stay null when unavailable or when a
+     * question has no evaluated submissions.
+     */
+    public List<QuestionSummaryDto> toSummaries(List<Question> questions) {
+        if (questions.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, QuestionStatsApiDto> stats = submissionServiceClient.getQuestionStats(
+                questions.stream().map(Question::getId).toList());
+
+        return questions.stream().map(q -> {
+            QuestionStatsApiDto s = stats.get(q.getId());
+            boolean hasStats = s != null && s.getTotalSubmissions() > 0;
+            return QuestionSummaryDto.builder()
+                    .id(q.getId())
+                    .questionTitle(q.getQuestionTitle())
+                    .difficultyLevel(q.getDifficultyLevel())
+                    .tags(q.getTags().stream().map(Tag::getName).collect(Collectors.toList()))
+                    .company(q.getCompany())
+                    .acceptanceRate(hasStats
+                            ? Math.round(s.getAcceptedSubmissions() * 1000.0 / s.getTotalSubmissions()) / 10.0
+                            : null)
+                    .totalSubmissions(hasStats ? (int) s.getTotalSubmissions() : null)
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     @Transactional

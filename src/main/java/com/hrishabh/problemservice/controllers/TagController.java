@@ -1,6 +1,7 @@
 package com.hrishabh.problemservice.controllers;
 
 import com.hrishabh.problemservice.dto.CreateTagRequestDto;
+import com.hrishabh.problemservice.dto.TagCountDto;
 import com.hrishabh.problemservice.dto.TagResponseDto;
 import com.hrishabh.problemservice.service.TagServiceImpl;
 import jakarta.validation.Valid;
@@ -33,6 +34,14 @@ public class TagController {
     @GetMapping
     public ResponseEntity<List<TagResponseDto>> listTags() {
         return ResponseEntity.ok(tagService.listTags());
+    }
+
+    /**
+     * List all tags with their problem counts, most used first
+     */
+    @GetMapping("/counts")
+    public ResponseEntity<List<TagCountDto>> listTagsWithCounts() {
+        return ResponseEntity.ok(tagService.listTagsWithCounts());
     }
 
     /**

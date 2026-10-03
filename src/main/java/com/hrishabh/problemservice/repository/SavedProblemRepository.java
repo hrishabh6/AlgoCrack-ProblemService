@@ -12,6 +12,8 @@ public interface SavedProblemRepository extends JpaRepository<SavedProblem, Long
 
     boolean existsByUserIdAndQuestionId(String userId, Long questionId);
 
+    long countByUserId(String userId);
+
     @Query("SELECT s.questionId FROM SavedProblem s WHERE s.userId = :userId ORDER BY s.createdAt DESC, s.id DESC")
     List<Long> findQuestionIdsByUserId(@Param("userId") String userId);
 

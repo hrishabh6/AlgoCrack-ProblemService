@@ -2,6 +2,7 @@ package com.hrishabh.problemservice.service;
 
 import com.hrishabh.problemservice.models.Tag;
 import com.hrishabh.problemservice.dto.CreateTagRequestDto;
+import com.hrishabh.problemservice.dto.TagCountDto;
 import com.hrishabh.problemservice.dto.TagResponseDto;
 import com.hrishabh.problemservice.exceptions.ResourceNotFoundException;
 import com.hrishabh.problemservice.repository.TagRepository;
@@ -44,6 +45,13 @@ public class TagServiceImpl {
         return tagRepository.findAll().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * List all tags with how many problems use each, most used first.
+     */
+    public List<TagCountDto> listTagsWithCounts() {
+        return tagRepository.findAllWithProblemCounts();
     }
 
     /**

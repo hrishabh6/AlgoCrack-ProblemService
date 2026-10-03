@@ -209,6 +209,30 @@ public class UserProfileService {
                 .build();
     }
 
+    /**
+     * Distinct ids of problems the user has an accepted submission for.
+     * Empty when SubmissionService is unavailable.
+     */
+    public List<Long> getSolvedQuestionIds(String userId) {
+        List<Long> ids = submissionServiceClient.getSolvedQuestionIds(userId);
+        return ids == null ? List.of() : ids.stream().distinct().toList();
+    }
+
+    /**
+     * Daily submission streak; zeroed when SubmissionService is unavailable.
+     */
+    public StreakDto getStreak(String userId) {
+        try {
+            StreakDto streak = submissionServiceClient.getStreak(userId);
+            if (streak != null) {
+                return streak;
+            }
+        } catch (RuntimeException e) {
+            log.warn("SubmissionService unavailable while fetching streak for {}: {}", userId, e.getMessage());
+        }
+        return StreakDto.builder().build();
+    }
+
     private String slugify(String input) {
         return input
                 .toLowerCase(Locale.ROOT)

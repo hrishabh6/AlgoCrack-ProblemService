@@ -36,6 +36,7 @@ public class Question extends BaseModel {
     private Boolean isOutputOrderMatters;
 
     @ManyToMany
+    @org.hibernate.annotations.BatchSize(size = 100)
     @JoinTable(name = "question_tag", joinColumns = @JoinColumn(name = "question_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<Tag> tags = new ArrayList<>();
 

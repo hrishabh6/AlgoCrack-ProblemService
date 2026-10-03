@@ -9,7 +9,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/questions")
@@ -19,8 +23,15 @@ public class ProblemsController {
     private final QuestionService questionService;
     private final QuestionMetadataRepository questionMetadataRepository;
 
+    private static final int MAX_TAG_FILTERS = 10;
+
     /**
-     * List questions with pagination and filtering
+     * List questions with pagination, filtering and sorting.
+     *
+     * @param tags  comma-separated tag names; a problem must carry all of them
+     * @param tag   single tag (kept for backward compatibility, merged into {@code tags})
+     * @param sort  {@code id} (default), {@code title} or {@code difficulty}
+     * @param order {@code asc} (default) or {@code desc}
      */
     @GetMapping
     public ResponseEntity<Page<QuestionSummaryDto>> listQuestions(
@@ -28,11 +39,38 @@ public class ProblemsController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String tags,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String company) {
-        Page<QuestionSummaryDto> questions = questionService.listQuestions(page, size, difficulty, tag, search,
-                company);
-        return ResponseEntity.ok(questions);
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String order) {
+        QuestionQuery query = buildQuery(page, size, difficulty, tag, tags, search, company, sort, order);
+        return ResponseEntity.ok(questionService.listQuestions(query));
+    }
+
+    static QuestionQuery buildQuery(int page, int size, String difficulty, String tag, String tags,
+            String search, String company, String sort, String order) {
+        Set<String> tagNames = new LinkedHashSet<>();
+        if (tags != null) {
+            Arrays.stream(tags.split(","))
+                    .map(String::trim)
+                    .filter(t -> !t.isEmpty())
+                    .limit(MAX_TAG_FILTERS)
+                    .forEach(tagNames::add);
+        }
+        if (tag != null && !tag.isBlank()) {
+            tagNames.add(tag.trim());
+        }
+        return QuestionQuery.builder()
+                .page(page)
+                .size(size)
+                .difficulty(difficulty)
+                .tags(new ArrayList<>(tagNames))
+                .search(search)
+                .company(company)
+                .sort(sort)
+                .order(order)
+                .build();
     }
 
     /**
