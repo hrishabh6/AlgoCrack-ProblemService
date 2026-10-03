@@ -58,4 +58,14 @@ public interface DailyChallengeRepository extends JpaRepository<DailyChallenge, 
     List<DailyChallenge> findByChallengeDateBetweenOrderByChallengeDateAsc(
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
+
+    @Query("""
+            SELECT dc FROM DailyChallenge dc
+            JOIN FETCH dc.question
+            WHERE dc.challengeDate <= :to AND dc.status = :status
+            ORDER BY dc.challengeDate ASC
+            """)
+    List<DailyChallenge> findPublishedThrough(
+            @Param("to") LocalDate to,
+            @Param("status") DailyChallengeStatus status);
 }

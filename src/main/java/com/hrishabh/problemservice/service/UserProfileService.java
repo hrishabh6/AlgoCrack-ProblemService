@@ -2,6 +2,10 @@ package com.hrishabh.problemservice.service;
 
 import com.hrishabh.problemservice.client.AuthServiceClient;
 import com.hrishabh.problemservice.client.SubmissionServiceClient;
+import com.hrishabh.problemservice.dailychallenge.model.DailyChallenge;
+import com.hrishabh.problemservice.dailychallenge.model.DailyChallengeStatus;
+import com.hrishabh.problemservice.dailychallenge.repository.DailyChallengeRepository;
+import com.hrishabh.problemservice.dailychallenge.service.PotdStreakCalculator;
 import com.hrishabh.problemservice.dto.*;
 import com.hrishabh.problemservice.models.Question;
 import com.hrishabh.problemservice.repository.QuestionsRepository;
@@ -10,8 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,6 +31,8 @@ public class UserProfileService {
     private final AuthServiceClient authServiceClient;
     private final SubmissionServiceClient submissionServiceClient;
     private final QuestionsRepository questionsRepository;
+    private final DailyChallengeRepository dailyChallengeRepository;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public UserProfileDto getUserProfile(String userId, int page, int size) {
@@ -218,17 +227,26 @@ public class UserProfileService {
         return ids == null ? List.of() : ids.stream().distinct().toList();
     }
 
-    /**
-     * Daily submission streak; zeroed when SubmissionService is unavailable.
-     */
+    /** POTD streak based only on accepted solves on each challenge's scheduled UTC date. */
+    @Transactional(readOnly = true)
     public StreakDto getStreak(String userId) {
         try {
-            StreakDto streak = submissionServiceClient.getStreak(userId);
-            if (streak != null) {
-                return streak;
+            LocalDate today = LocalDate.now(clock);
+            List<DailyChallenge> challenges = dailyChallengeRepository.findPublishedThrough(
+                    today, DailyChallengeStatus.PUBLISHED);
+            if (challenges.isEmpty()) {
+                return StreakDto.builder().build();
             }
+
+            Map<LocalDate, Long> schedule = challenges.stream().collect(Collectors.toMap(
+                    DailyChallenge::getChallengeDate,
+                    challenge -> challenge.getQuestion().getId()));
+            LocalDate firstChallengeDate = challenges.getFirst().getChallengeDate();
+            List<AcceptedSubmissionDayDto> accepted = submissionServiceClient
+                    .getAcceptedSubmissionDays(userId, firstChallengeDate, today);
+            return PotdStreakCalculator.calculate(schedule, accepted, today);
         } catch (RuntimeException e) {
-            log.warn("SubmissionService unavailable while fetching streak for {}: {}", userId, e.getMessage());
+            log.warn("Unable to calculate POTD streak for {}: {}", userId, e.getMessage());
         }
         return StreakDto.builder().build();
     }
