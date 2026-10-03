@@ -21,6 +21,12 @@ public class QuestionSpecification {
                 : cb.equal(cb.lower(root.get("difficultyLevel")), difficulty.trim().toLowerCase(Locale.ROOT));
     }
 
+    public static Specification<Question> lacksDifficulty(String difficulty) {
+        return (root, query, cb) -> difficulty == null || difficulty.isBlank()
+                ? null
+                : cb.notEqual(cb.lower(root.get("difficultyLevel")), difficulty.trim().toLowerCase(Locale.ROOT));
+    }
+
     public static Specification<Question> hasTag(String tagName) {
         return (root, query, cb) -> {
             if (tagName == null || tagName.isBlank())
@@ -46,6 +52,26 @@ public class QuestionSpecification {
                         .where(cb.equal(subRoot.get("id"), root.get("id")),
                                 cb.equal(subTags.get("name"), tagName));
                 return cb.exists(sub);
+            }).toArray(Predicate[]::new);
+            return cb.and(predicates);
+        };
+    }
+
+    /**
+     * Matches questions that carry none of the given tags. Dual of {@link #hasAllTags}.
+     */
+    public static Specification<Question> hasNoneOfTags(List<String> tagNames) {
+        return (root, query, cb) -> {
+            if (tagNames == null || tagNames.isEmpty())
+                return null;
+            Predicate[] predicates = tagNames.stream().map(tagName -> {
+                Subquery<Long> sub = query.subquery(Long.class);
+                Root<Question> subRoot = sub.from(Question.class);
+                Join<Question, Tag> subTags = subRoot.join("tags");
+                sub.select(subRoot.get("id"))
+                        .where(cb.equal(subRoot.get("id"), root.get("id")),
+                                cb.equal(subTags.get("name"), tagName));
+                return cb.not(cb.exists(sub));
             }).toArray(Predicate[]::new);
             return cb.and(predicates);
         };

@@ -8,9 +8,11 @@ import java.util.List;
 /**
  * Filter, sort and paging options for listing questions.
  *
- * @param tags  problems must carry every listed tag
- * @param sort  one of {@code id}, {@code title}, {@code difficulty}; anything else falls back to {@code id}
- * @param order {@code asc} (default) or {@code desc}
+ * @param tags               problems must carry every listed tag
+ * @param excludeDifficulty  problems must not have this difficulty
+ * @param excludeTags        problems must carry none of these tags
+ * @param sort               one of {@code id}, {@code title}, {@code difficulty}; anything else falls back to {@code id}
+ * @param order              {@code asc} (default) or {@code desc}
  */
 @Value
 @Builder
@@ -20,6 +22,8 @@ public class QuestionQuery {
     String search;
     String difficulty;
     List<String> tags;
+    String excludeDifficulty;
+    List<String> excludeTags;
     String company;
     String sort;
     String order;

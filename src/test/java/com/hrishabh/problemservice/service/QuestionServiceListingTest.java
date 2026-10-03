@@ -84,4 +84,12 @@ class QuestionServiceListingTest {
 
         assertThat(query.getTags()).containsExactly("Graph", "Array", "Tree");
     }
+
+    @Test
+    void excludeFiltersParseAndDedupe() {
+        QuestionQuery query = ProblemsControllerTestAccess.buildExcludeQuery("Easy", " Array, Graph ,,Array");
+
+        assertThat(query.getExcludeDifficulty()).isEqualTo("Easy");
+        assertThat(query.getExcludeTags()).containsExactly("Array", "Graph");
+    }
 }
