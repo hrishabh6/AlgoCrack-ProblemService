@@ -59,7 +59,7 @@ class ComplexityBenchmarkProfileFlywayIntegrationTest {
         try (Connection connection = connection();
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(
-                     "SELECT profile_id, question_id, language, profile_version, profile_hash, status, "
+                     "SELECT profile_id, question_id, language, profile_version, profile_hash, status, active_slot, "
                              + "variable_definitions_json, size_plan_json, variant_plan_json, measurement_limits_json, "
                              + "profile_code, generator_key, generator_version "
                              + "FROM complexity_benchmark_profile ORDER BY question_id")) {
@@ -67,6 +67,7 @@ class ComplexityBenchmarkProfileFlywayIntegrationTest {
             while (rs.next()) {
                 count++;
                 assertEquals("ACTIVE", rs.getString("status"));
+                assertEquals(1, rs.getObject("active_slot"));
                 assertEquals("JAVA", rs.getString("language"));
                 String storedHash = rs.getString("profile_hash");
                 assertEquals(64, storedHash.length());
@@ -106,19 +107,169 @@ class ComplexityBenchmarkProfileFlywayIntegrationTest {
     }
 
     @Test
-    void activeProfileSelectionIsDeterministicByVersion() throws SQLException {
+    void seededProfilesHaveExactlyOneActiveSlotPerQuestionLanguage() throws SQLException {
         try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement("""
-                     SELECT profile_version FROM complexity_benchmark_profile
-                     WHERE question_id = ? AND language = ? AND status = 'ACTIVE'
-                     ORDER BY profile_version DESC LIMIT 1
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("""
+                     SELECT question_id, language, COUNT(*) AS active_count
+                     FROM complexity_benchmark_profile
+                     WHERE active_slot = 1
+                     GROUP BY question_id, language
                      """)) {
-            ps.setLong(1, 10L);
-            ps.setString(2, "JAVA");
+            int groups = 0;
+            while (rs.next()) {
+                groups++;
+                assertEquals(1, rs.getInt("active_count"));
+            }
+            assertEquals(3, groups);
+        }
+    }
+
+    @Test
+    void insertWithActiveStatusDerivesActiveSlotOne() throws SQLException {
+        try (Connection connection = connection()) {
+            insertProfile(connection, "cbp-q99-java-insert-active", "FOUR_SUM_INT_ARRAY", 99L, "v-insert", "ACTIVE");
+            assertEquals(1, readActiveSlot(connection, "cbp-q99-java-insert-active"));
+        }
+    }
+
+    @Test
+    void updateStatusToDisabledClearsDerivedActiveSlot() throws SQLException {
+        try (Connection connection = connection()) {
+            insertProfile(connection, "cbp-q99-java-toggle", "FOUR_SUM_INT_ARRAY", 99L, "v-toggle", "ACTIVE");
+            assertEquals(1, readActiveSlot(connection, "cbp-q99-java-toggle"));
+            setStatus(connection, "cbp-q99-java-toggle", "DISABLED");
+            assertNull(readActiveSlot(connection, "cbp-q99-java-toggle"));
+        }
+    }
+
+    @Test
+    void updateDisabledProfileToActiveDerivesActiveSlotOne() throws SQLException {
+        try (Connection connection = connection()) {
+            insertProfile(connection, "cbp-q99-java-reactivate", "FOUR_SUM_INT_ARRAY", 99L, "v-reactivate", "DISABLED");
+            assertNull(readActiveSlot(connection, "cbp-q99-java-reactivate"));
+            setStatus(connection, "cbp-q99-java-reactivate", "ACTIVE");
+            assertEquals(1, readActiveSlot(connection, "cbp-q99-java-reactivate"));
+        }
+    }
+
+    @Test
+    void rejectsSecondActiveProfileForSameQuestionAndLanguage() throws SQLException {
+        try (Connection connection = connection()) {
+            assertThrows(SQLException.class, () -> insertProfile(
+                    connection,
+                    "cbp-q10-java-v2",
+                    "FOUR_SUM_INT_ARRAY",
+                    10L,
+                    "v2",
+                    "ACTIVE"));
+        }
+    }
+
+    @Test
+    void allowsMultipleDisabledHistoricalVersions() throws SQLException {
+        try (Connection connection = connection()) {
+            insertProfile(connection, "cbp-q10-java-hist-a", "FOUR_SUM_INT_ARRAY", 10L, "v0-hist-a", "DISABLED");
+            insertProfile(connection, "cbp-q10-java-hist-b", "FOUR_SUM_INT_ARRAY", 10L, "v0-hist-b", "DISABLED");
+            try (PreparedStatement ps = connection.prepareStatement("""
+                    SELECT COUNT(*) FROM complexity_benchmark_profile
+                    WHERE question_id = ? AND language = 'JAVA' AND active_slot IS NULL AND status = 'DISABLED'
+                    """)) {
+                ps.setLong(1, 10L);
+                try (ResultSet rs = ps.executeQuery()) {
+                    assertTrue(rs.next());
+                    assertTrue(rs.getInt(1) >= 2);
+                }
+            }
+        }
+    }
+
+    @Test
+    void disablingOldVersionThenActivatingNewVersionSucceeds() throws SQLException {
+        try (Connection connection = connection()) {
+            setStatus(connection, "cbp-q10-java-v1", "DISABLED");
+            insertProfile(connection, "cbp-q10-java-v2", "FOUR_SUM_INT_ARRAY", 10L, "v2", "ACTIVE");
+            try (PreparedStatement ps = connection.prepareStatement("""
+                    SELECT profile_version FROM complexity_benchmark_profile
+                    WHERE question_id = ? AND language = 'JAVA' AND active_slot = 1
+                    """)) {
+                ps.setLong(1, 10L);
+                try (ResultSet rs = ps.executeQuery()) {
+                    assertTrue(rs.next());
+                    assertEquals("v2", rs.getString(1));
+                    assertFalse(rs.next());
+                }
+            }
+        }
+    }
+
+    @Test
+    void activeLookupUsesActiveSlotNotLexicalProfileVersion() throws SQLException {
+        try (Connection connection = connection()) {
+            insertProfile(connection, "cbp-q10-java-v9-disabled", "FOUR_SUM_INT_ARRAY", 10L, "v9", "DISABLED");
+            try (PreparedStatement ps = connection.prepareStatement("""
+                    SELECT profile_version FROM complexity_benchmark_profile
+                    WHERE question_id = ? AND language = 'JAVA' AND active_slot = 1
+                    """)) {
+                ps.setLong(1, 10L);
+                try (ResultSet rs = ps.executeQuery()) {
+                    assertTrue(rs.next());
+                    assertEquals("v1", rs.getString(1));
+                    assertFalse(rs.next());
+                }
+            }
+        }
+    }
+
+    private static void insertProfile(
+            Connection connection,
+            String profileId,
+            String profileCode,
+            long questionId,
+            String profileVersion,
+            String status) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement("""
+                INSERT INTO complexity_benchmark_profile (
+                  profile_id, profile_code, question_id, language, profile_version,
+                  generator_key, generator_version, status,
+                  variable_definitions_json, size_plan_json, variant_plan_json, measurement_limits_json,
+                  profile_hash, created_at, updated_at
+                ) VALUES (?, ?, ?, 'JAVA', ?, 'INT_ARRAY_WITH_TARGET', 'v1', ?,
+                  CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON),
+                  ?, NOW(6), NOW(6))
+                """)) {
+            ps.setString(1, profileId);
+            ps.setString(2, profileCode);
+            ps.setLong(3, questionId);
+            ps.setString(4, profileVersion);
+            ps.setString(5, status);
+            ps.setString(6, "[{\"name\":\"n\",\"meaning\":\"length\",\"parameter\":\"nums\",\"dimension\":\"length\"}]");
+            ps.setString(7, "{\"ladder\":{\"n\":[64]},\"maxSizes\":{\"n\":512}}");
+            ps.setString(8, "{\"variants\":[\"RANDOM\"]}");
+            ps.setString(9, "{\"warmups\":3,\"measuredRepeats\":5,\"perInvocationTimeoutMs\":1000,\"maxTotalProfileMs\":15000}");
+            ps.setString(10, "0".repeat(64));
+            ps.executeUpdate();
+        }
+    }
+
+    private static void setStatus(Connection connection, String profileId, String status) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement("""
+                UPDATE complexity_benchmark_profile SET status = ? WHERE profile_id = ?
+                """)) {
+            ps.setString(1, status);
+            ps.setString(2, profileId);
+            assertEquals(1, ps.executeUpdate());
+        }
+    }
+
+    private static Integer readActiveSlot(Connection connection, String profileId) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement("""
+                SELECT active_slot FROM complexity_benchmark_profile WHERE profile_id = ?
+                """)) {
+            ps.setString(1, profileId);
             try (ResultSet rs = ps.executeQuery()) {
                 assertTrue(rs.next());
-                assertEquals("v1", rs.getString(1));
-                assertFalse(rs.next());
+                return (Integer) rs.getObject("active_slot");
             }
         }
     }

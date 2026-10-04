@@ -6,7 +6,13 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "complexity_benchmark_profile")
+@Table(
+        name = "complexity_benchmark_profile",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_complexity_question_lang_active_slot",
+                        columnNames = {"questionId", "language", "activeSlot"})
+        })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -42,6 +48,9 @@ public class ComplexityBenchmarkProfile {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private ComplexityProfileStatus status;
+
+    @Column(name = "active_slot", insertable = false, updatable = false)
+    private Integer activeSlot;
 
     @Column(name = "variable_definitions_json", nullable = false, columnDefinition = "json")
     private String variableDefinitionsJson;

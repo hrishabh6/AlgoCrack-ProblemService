@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrishabh.problemservice.complexity.dto.ComplexityProfileDtos.*;
 import com.hrishabh.problemservice.complexity.generator.BenchmarkGenerator;
 import com.hrishabh.problemservice.complexity.model.ComplexityBenchmarkProfile;
-import com.hrishabh.problemservice.complexity.model.ComplexityProfileStatus;
 import com.hrishabh.problemservice.complexity.repository.ComplexityBenchmarkProfileRepository;
+import com.hrishabh.problemservice.complexity.support.ComplexityBenchmarkProfileSlots;
 import com.hrishabh.problemservice.complexity.support.ComplexityProfileLimits;
 import com.hrishabh.problemservice.complexity.support.DeterministicSeedDeriver;
 import com.hrishabh.problemservice.complexity.support.ProfileContentHasher;
@@ -26,8 +26,10 @@ public class ComplexityProfileService {
 
     @Transactional(readOnly = true)
     public Optional<ProfileMetadataResponse> getActiveProfile(long questionId, String language) {
-        return repository.findFirstByQuestionIdAndLanguageAndStatusOrderByProfileVersionDesc(
-                        questionId, language.toUpperCase(Locale.ROOT), ComplexityProfileStatus.ACTIVE)
+        return repository.findByQuestionIdAndLanguageAndActiveSlot(
+                        questionId,
+                        language.toUpperCase(Locale.ROOT),
+                        ComplexityBenchmarkProfileSlots.ACTIVE)
                 .map(entity -> toMetadata(validator.validateAndParse(entity)));
     }
 
