@@ -33,18 +33,20 @@ public class ComplexityProfileService {
 
     @Transactional(readOnly = true)
     public CasesResponse generateCases(long questionId, CasesRequest request) {
-        ComplexityBenchmarkProfile entity = repository
-                .findByQuestionIdAndLanguageAndProfileVersion(
-                        questionId, request.language().toUpperCase(Locale.ROOT), request.profileVersion())
-                .orElseThrow(() -> new ProfileUnavailableException("profile version not found"));
-        if (entity.getStatus() != ComplexityProfileStatus.ACTIVE) {
-            throw new ProfileUnavailableException("profile inactive");
+        String language = request.language().toUpperCase(Locale.ROOT);
+        ProfileMetadataResponse active = getActiveProfile(questionId, language)
+                .orElseThrow(() -> new ProfileUnavailableException("no active profile"));
+        if (!active.profileVersion().equals(request.profileVersion())) {
+            throw new ProfileUnavailableException("requested profile version is not active");
         }
-        ComplexityProfileValidator.ParsedProfile parsed = validator.validateAndParse(entity);
-        String activeHash = resolvePublicHash(parsed);
-        if (!activeHash.equals(request.profileHash())) {
+        if (!active.profileHash().equals(request.profileHash())) {
             throw new ProfileUnavailableException("profile hash mismatch");
         }
+
+        ComplexityBenchmarkProfile entity = repository
+                .findByQuestionIdAndLanguageAndProfileVersion(questionId, language, request.profileVersion())
+                .orElseThrow(() -> new ProfileUnavailableException("profile version not found"));
+        ComplexityProfileValidator.ParsedProfile parsed = validator.validateAndParse(entity);
 
         List<GeneratedCaseDto> cases = new ArrayList<>();
         List<Map<String, Integer>> sizePoints = enumerateSizePoints(parsed.ladder());
@@ -57,9 +59,15 @@ public class ComplexityProfileService {
             }
         }
         return new CasesResponse(
-                parsed.entity().getProfileVersion(),
-                resolvePublicHash(parsed),
-                parsed.entity().getGeneratorVersion(),
+                entity.getQuestionId(),
+                entity.getLanguage(),
+                entity.getProfileId(),
+                entity.getProfileCode(),
+                entity.getProfileVersion(),
+                ComplexityProfileValidator.expectedProfileHash(
+                        entity, parsed.variables(), parsed.ladder(), parsed.maxSizes(), parsed.variants(), parsed.limits()),
+                entity.getGeneratorKey(),
+                entity.getGeneratorVersion(),
                 cases);
     }
 
@@ -79,10 +87,29 @@ public class ComplexityProfileService {
         BenchmarkGenerator generator = parsed.generator();
         JsonNode input = generator.generateInput(sizeVector, variant, seedLong);
         enforceSerializedBounds(input);
-        String inputJson = input.toString();
-        String inputHash = ProfileContentHasher.sha256Hex(inputJson);
-        String caseId = buildCaseId(sizeVector, variant);
-        return new GeneratedCaseDto(caseId, sizeVector, variant, seed, input, inputHash);
+        String serializedInput;
+        try {
+            serializedInput = objectMapper.writeValueAsString(input);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new InvalidComplexityProfileException("failed to serialize generated input");
+        }
+        String inputHash = ProfileContentHasher.sha256Hex(serializedInput);
+        String caseIdentity = ProfileContentHasher.sha256Hex(seedMaterial);
+        String caseId = caseIdentity.substring(0, 16) + "-" + variant.toLowerCase(Locale.ROOT);
+        return new GeneratedCaseDto(
+                parsed.entity().getProfileCode(),
+                parsed.entity().getProfileVersion(),
+                ComplexityProfileValidator.expectedProfileHash(
+                        parsed.entity(), parsed.variables(), parsed.ladder(), parsed.maxSizes(), parsed.variants(), parsed.limits()),
+                parsed.entity().getGeneratorVersion(),
+                caseId,
+                caseIdentity,
+                sizeVector,
+                variant,
+                seed,
+                serializedInput,
+                input,
+                inputHash);
     }
 
     private void enforceSerializedBounds(JsonNode input) {
@@ -148,7 +175,8 @@ public class ComplexityProfileService {
                 entity.getProfileId(),
                 entity.getProfileCode(),
                 entity.getProfileVersion(),
-                resolvePublicHash(parsed),
+                ComplexityProfileValidator.expectedProfileHash(
+                        entity, parsed.variables(), parsed.ladder(), parsed.maxSizes(), parsed.variants(), parsed.limits()),
                 entity.getGeneratorKey(),
                 entity.getGeneratorVersion(),
                 parsed.variables(),
@@ -161,16 +189,4 @@ public class ComplexityProfileService {
                 parsed.limits().maxTotalProfileMs());
     }
 
-    private String resolvePublicHash(ComplexityProfileValidator.ParsedProfile parsed) {
-        if (parsed.entity().getProfileHash().startsWith("sha256:")) {
-            return ComplexityProfileValidator.canonicalContent(
-                    parsed.entity(),
-                    parsed.variables(),
-                    parsed.ladder(),
-                    parsed.maxSizes(),
-                    parsed.variants(),
-                    parsed.limits());
-        }
-        return parsed.entity().getProfileHash();
-    }
 }

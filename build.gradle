@@ -49,6 +49,9 @@ dependencies {
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.karatelabs:karate-junit5:1.5.1'
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:mysql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     
 

@@ -61,7 +61,7 @@ public class IntMatrixRowsColsGenerator implements BenchmarkGenerator {
                 int centerC = cols / 2;
                 yield 1000 - Math.abs(r - centerR) - Math.abs(c - centerC);
             }
-            default -> random.nextInt(1001);
+            default -> random.nextInt(100_001);
         };
     }
 }

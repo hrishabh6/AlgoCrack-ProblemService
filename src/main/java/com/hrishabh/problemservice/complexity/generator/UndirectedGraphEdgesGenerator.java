@@ -50,6 +50,7 @@ public class UndirectedGraphEdgesGenerator implements BenchmarkGenerator {
         if ("CHAIN".equals(variant)) {
             for (int i = 0; i < v - 1; i++) {
                 edges.add(edgeNode(objectMapper, i, i + 1));
+                seen.add(canonicalEdge(i, i + 1));
             }
             int remaining = e - (v - 1);
             for (int i = 0; i < remaining; i++) {

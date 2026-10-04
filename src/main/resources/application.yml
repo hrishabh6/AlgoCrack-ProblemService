@@ -71,3 +71,4 @@ services:
 complexity:
   profile-api-enabled: ${COMPLEXITY_PROFILE_API_ENABLED:false}
   internal-service-token: ${INTERNAL_SERVICE_TOKEN:}
+  internal-auth-require-token: ${COMPLEXITY_INTERNAL_AUTH_REQUIRE_TOKEN:false}

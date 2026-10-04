@@ -19,5 +19,11 @@ public class ComplexityProfileProperties {
      */
     private String internalServiceToken = "";
 
+    /**
+     * When true, internal complexity/reference APIs require {@link #INTERNAL_SERVICE_TOKEN_HEADER}
+     * and reject header-only trust. Use in production.
+     */
+    private boolean internalAuthRequireToken = false;
+
     public static final String INTERNAL_SERVICE_TOKEN_HEADER = "X-Internal-Service-Token";
 }

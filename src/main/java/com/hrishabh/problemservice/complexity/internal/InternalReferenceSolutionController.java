@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Internal oracle access for future complexity benchmark validation.
- * Public {@code /api/v1/questions/{id}/reference-solution} remains for legacy callers until Gateway denies it.
+ * Internal oracle access for Submission Service complexity benchmarking.
+ * Public GET was removed; admin PUT/DELETE remain on {@code /api/v1/questions/{id}/reference-solution}.
  */
 @RestController
 @RequestMapping("/api/v1/internal/questions/{questionId}/reference-solution")

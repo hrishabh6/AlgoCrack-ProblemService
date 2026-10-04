@@ -35,8 +35,8 @@ public class IntArrayWithTargetGenerator implements BenchmarkGenerator {
     @Override
     public ArrayNode generateInput(Map<String, Integer> sizeVector, String variant, long seedLong) {
         int n = sizeVector.getOrDefault("n", 0);
-        if (n <= 0) {
-            throw new IllegalArgumentException("n must be positive");
+        if (n < 4) {
+            throw new IllegalArgumentException("four-sum profile requires n >= 4");
         }
         Random random = new Random(seedLong);
         int[] nums = new int[n];
@@ -57,7 +57,7 @@ public class IntArrayWithTargetGenerator implements BenchmarkGenerator {
                 }
             }
         }
-        int target = nums[0] + nums[Math.min(1, n - 1)];
+        int target = nums[0] + nums[1] + nums[2] + nums[3];
         ArrayNode args = objectMapper.createArrayNode();
         ArrayNode numsNode = objectMapper.createArrayNode();
         for (int value : nums) {

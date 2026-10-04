@@ -2,14 +2,17 @@ package com.hrishabh.problemservice.complexity.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrishabh.problemservice.complexity.generator.BenchmarkGeneratorRegistry;
+import com.hrishabh.problemservice.complexity.dto.ComplexityProfileDtos.VariableDefinition;
 import com.hrishabh.problemservice.complexity.generator.IntArrayWithTargetGenerator;
 import com.hrishabh.problemservice.complexity.model.ComplexityBenchmarkProfile;
 import com.hrishabh.problemservice.complexity.model.ComplexityProfileStatus;
+import com.hrishabh.problemservice.complexity.support.ProfileCanonicalJson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -50,12 +53,31 @@ class ComplexityProfileValidatorTest {
     }
 
     @Test
-    void acceptsPlaceholderHashProfiles() {
+    void acceptsProfileWhenCanonicalHashMatches() {
         ComplexityBenchmarkProfile profile = baseProfile();
         assertDoesNotThrow(() -> validator.validateAndParse(profile));
     }
 
+    @Test
+    void rejectsProfileHashMismatch() {
+        ComplexityBenchmarkProfile profile = baseProfile();
+        profile.setProfileHash("0".repeat(64));
+        assertThrows(InvalidComplexityProfileException.class, () -> validator.validateAndParse(profile));
+    }
+
     private static ComplexityBenchmarkProfile baseProfile() {
+        String hash = ProfileCanonicalJson.profileHash(
+                10L,
+                "JAVA",
+                "FOUR_SUM_INT_ARRAY",
+                "v1",
+                "INT_ARRAY_WITH_TARGET",
+                "v1",
+                List.of(new VariableDefinition("n", "length of nums", "nums", "length")),
+                Map.of("n", List.of(64, 128)),
+                Map.of("n", 512),
+                List.of("RANDOM", "SORTED"),
+                new ComplexityProfileValidator.MeasurementLimits(3, 5, 1000, 15000));
         return ComplexityBenchmarkProfile.builder()
                 .profileId("test-profile")
                 .profileCode("FOUR_SUM_INT_ARRAY")
@@ -77,7 +99,7 @@ class ComplexityProfileValidatorTest {
                 .measurementLimitsJson("""
                         {"warmups":3,"measuredRepeats":5,"perInvocationTimeoutMs":1000,"maxTotalProfileMs":15000}
                         """)
-                .profileHash("sha256:placeholder")
+                .profileHash(hash)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();

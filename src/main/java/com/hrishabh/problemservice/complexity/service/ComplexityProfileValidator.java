@@ -7,7 +7,7 @@ import com.hrishabh.problemservice.complexity.generator.BenchmarkGenerator;
 import com.hrishabh.problemservice.complexity.generator.BenchmarkGeneratorRegistry;
 import com.hrishabh.problemservice.complexity.model.ComplexityBenchmarkProfile;
 import com.hrishabh.problemservice.complexity.support.ComplexityProfileLimits;
-import com.hrishabh.problemservice.complexity.support.ProfileContentHasher;
+import com.hrishabh.problemservice.complexity.support.ProfileCanonicalJson;
 import com.hrishabh.problemservice.models.Language;
 import org.springframework.stereotype.Component;
 
@@ -47,34 +47,33 @@ public class ComplexityProfileValidator {
         validateLadder(ladder, maxSizes, variables);
         validateVariants(variants, generator);
 
-        if (!profile.getProfileHash().startsWith("sha256:")) {
-            String canonical = canonicalContent(profile, variables, ladder, maxSizes, variants, limits);
-            String expectedHash = ProfileContentHasher.sha256Hex(canonical);
-            if (!expectedHash.equals(profile.getProfileHash())) {
-                throw new InvalidComplexityProfileException("profile hash mismatch");
-            }
+        String expectedHash = expectedProfileHash(profile, variables, ladder, maxSizes, variants, limits);
+        if (!expectedHash.equals(profile.getProfileHash())) {
+            throw new InvalidComplexityProfileException("profile hash mismatch");
         }
 
         return new ParsedProfile(profile, variables, ladder, maxSizes, variants, limits, generator);
     }
 
-    public static String canonicalContent(
+    public static String expectedProfileHash(
             ComplexityBenchmarkProfile profile,
             List<VariableDefinition> variables,
             Map<String, List<Integer>> ladder,
             Map<String, Integer> maxSizes,
             List<String> variants,
             MeasurementLimits limits) {
-        return profile.getQuestionId() + "|"
-                + profile.getLanguage() + "|"
-                + profile.getProfileVersion() + "|"
-                + profile.getGeneratorKey() + "|"
-                + profile.getGeneratorVersion() + "|"
-                + variables + "|"
-                + new TreeMap<>(ladder) + "|"
-                + new TreeMap<>(maxSizes) + "|"
-                + variants + "|"
-                + limits;
+        return ProfileCanonicalJson.profileHash(
+                profile.getQuestionId(),
+                profile.getLanguage(),
+                profile.getProfileCode(),
+                profile.getProfileVersion(),
+                profile.getGeneratorKey(),
+                profile.getGeneratorVersion(),
+                variables,
+                ladder,
+                maxSizes,
+                variants,
+                limits);
     }
 
     private void validateLadder(

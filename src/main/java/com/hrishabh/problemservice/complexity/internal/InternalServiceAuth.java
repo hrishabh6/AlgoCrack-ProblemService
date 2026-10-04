@@ -4,6 +4,7 @@ import com.hrishabh.problemservice.complexity.config.ComplexityProfileProperties
 import com.hrishabh.problemservice.exceptions.ForbiddenException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -20,10 +21,14 @@ public class InternalServiceAuth {
     }
 
     public void requireInternal(HttpServletRequest request) {
-        String token = properties.getInternalServiceToken();
-        if (token != null && !token.isBlank()) {
+        String configuredToken = properties.getInternalServiceToken();
+        boolean tokenConfigured = StringUtils.hasText(configuredToken);
+        if (properties.isInternalAuthRequireToken() || tokenConfigured) {
+            if (!tokenConfigured) {
+                throw new ForbiddenException("Internal service token is not configured");
+            }
             String provided = request.getHeader(ComplexityProfileProperties.INTERNAL_SERVICE_TOKEN_HEADER);
-            if (provided == null || !constantTimeEquals(token, provided)) {
+            if (provided == null || !constantTimeEquals(configuredToken, provided)) {
                 throw new ForbiddenException("Internal service authentication required");
             }
             return;
