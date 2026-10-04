@@ -7,6 +7,9 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import com.hrishabh.problemservice.complexity.dto.ComplexityProfileDtos.ProfileUnavailableResponse;
+import com.hrishabh.problemservice.complexity.service.InvalidComplexityProfileException;
+import com.hrishabh.problemservice.complexity.service.ProfileUnavailableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -26,6 +29,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(IllegalArgumentException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidComplexityProfileException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidProfile(InvalidComplexityProfileException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(ProfileUnavailableException.class)
+    public ResponseEntity<ProfileUnavailableResponse> handleProfileUnavailable(ProfileUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ProfileUnavailableResponse("PROFILE_UNAVAILABLE", ex.getMessage()));
     }
 
     @ExceptionHandler(UnauthorizedException.class)

@@ -66,3 +66,8 @@ services:
     base-url: ${AUTH_SERVICE_BASE_URL:http://auth-service:7483}
   submission:
     base-url: ${SUBMISSION_SERVICE_URL:http://submission-service:8080}
+
+# Complexity benchmark profiles (Phase 3 — internal only, default off)
+complexity:
+  profile-api-enabled: ${COMPLEXITY_PROFILE_API_ENABLED:false}
+  internal-service-token: ${INTERNAL_SERVICE_TOKEN:}
