@@ -2,6 +2,8 @@ package com.hrishabh.problemservice.complexity.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -49,6 +51,7 @@ public class ComplexityBenchmarkProfile {
     @Column(nullable = false, length = 16)
     private ComplexityProfileStatus status;
 
+    @JdbcTypeCode(SqlTypes.TINYINT)
     @Column(name = "active_slot", insertable = false, updatable = false)
     private Integer activeSlot;
 
@@ -64,6 +67,7 @@ public class ComplexityBenchmarkProfile {
     @Column(name = "measurement_limits_json", nullable = false, columnDefinition = "json")
     private String measurementLimitsJson;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "profile_hash", nullable = false, length = 64)
     private String profileHash;
 
