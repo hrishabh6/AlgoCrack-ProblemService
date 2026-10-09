@@ -57,7 +57,7 @@ public class QuestionService {
         Specification<Question> spec = Specification
                 .where(QuestionSpecification.hasDifficulty(query.getDifficulty()))
                 .and(QuestionSpecification.lacksDifficulty(query.getExcludeDifficulty()))
-                .and(QuestionSpecification.hasAllTags(query.getTags()))
+                .and(QuestionSpecification.hasAnyOfTags(query.getTags()))
                 .and(QuestionSpecification.hasNoneOfTags(query.getExcludeTags()))
                 .and(QuestionSpecification.titleOrIdMatches(query.getSearch()))
                 .and(QuestionSpecification.hasCompany(query.getCompany()))

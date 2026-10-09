@@ -37,28 +37,25 @@ public class QuestionSpecification {
     }
 
     /**
-     * Matches questions that carry every one of the given tags. Uses one EXISTS subquery per tag
-     * so no duplicate rows are produced and paging counts stay correct.
+     * Matches questions that carry at least one of the given tags (union). Uses a single EXISTS
+     * subquery so paging counts stay correct and rows are not duplicated.
      */
-    public static Specification<Question> hasAllTags(List<String> tagNames) {
+    public static Specification<Question> hasAnyOfTags(List<String> tagNames) {
         return (root, query, cb) -> {
             if (tagNames == null || tagNames.isEmpty())
                 return null;
-            Predicate[] predicates = tagNames.stream().map(tagName -> {
-                Subquery<Long> sub = query.subquery(Long.class);
-                Root<Question> subRoot = sub.from(Question.class);
-                Join<Question, Tag> subTags = subRoot.join("tags");
-                sub.select(subRoot.get("id"))
-                        .where(cb.equal(subRoot.get("id"), root.get("id")),
-                                cb.equal(subTags.get("name"), tagName));
-                return cb.exists(sub);
-            }).toArray(Predicate[]::new);
-            return cb.and(predicates);
+            Subquery<Long> sub = query.subquery(Long.class);
+            Root<Question> subRoot = sub.from(Question.class);
+            Join<Question, Tag> subTags = subRoot.join("tags");
+            sub.select(subRoot.get("id"))
+                    .where(cb.equal(subRoot.get("id"), root.get("id")),
+                            subTags.get("name").in(tagNames));
+            return cb.exists(sub);
         };
     }
 
     /**
-     * Matches questions that carry none of the given tags. Dual of {@link #hasAllTags}.
+     * Matches questions that carry none of the given tags. Dual of {@link #hasAnyOfTags}.
      */
     public static Specification<Question> hasNoneOfTags(List<String> tagNames) {
         return (root, query, cb) -> {

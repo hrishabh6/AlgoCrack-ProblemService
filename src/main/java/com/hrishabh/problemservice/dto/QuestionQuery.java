@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Filter, sort and paging options for listing questions.
  *
- * @param tags               problems must carry every listed tag
+ * @param tags               problems must carry at least one listed tag
  * @param excludeDifficulty  problems must not have this difficulty
  * @param excludeTags        problems must carry none of these tags
  * @param sort               one of {@code id}, {@code title}, {@code difficulty}; anything else falls back to {@code id}

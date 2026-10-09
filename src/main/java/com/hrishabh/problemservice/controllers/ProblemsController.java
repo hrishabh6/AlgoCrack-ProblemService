@@ -28,7 +28,7 @@ public class ProblemsController {
     /**
      * List questions with pagination, filtering and sorting.
      *
-     * @param tags               comma-separated tag names; a problem must carry all of them
+     * @param tags               comma-separated tag names; a problem must carry at least one of them
      * @param tag                single tag (kept for backward compatibility, merged into {@code tags})
      * @param excludeDifficulty  problems must not have this difficulty
      * @param excludeTags        comma-separated tag names; a problem must carry none of them
