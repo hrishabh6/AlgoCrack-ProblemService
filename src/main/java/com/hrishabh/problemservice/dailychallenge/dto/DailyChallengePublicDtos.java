@@ -38,4 +38,22 @@ public final class DailyChallengePublicDtos {
     public static class DailyChallengeRangeResponse {
         List<DailyChallengeResponse> challenges;
     }
+
+    /**
+     * Validates daily-challenge URL context ({@code envType=daily-question}, {@code envId=date})
+     * against the published schedule and the loaded problem.
+     */
+    @Value
+    @Builder
+    public static class DailyChallengeContextResponse {
+        boolean valid;
+        LocalDate challengeDate;
+        long expectedQuestionId;
+        long actualQuestionId;
+        /** True when {@code challengeDate} is before today (UTC). */
+        boolean historical;
+        /** True when {@code challengeDate} equals today (UTC). */
+        boolean activeToday;
+        String problemTitle;
+    }
 }

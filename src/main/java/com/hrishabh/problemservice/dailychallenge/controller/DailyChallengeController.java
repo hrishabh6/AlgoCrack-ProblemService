@@ -1,5 +1,6 @@
 package com.hrishabh.problemservice.dailychallenge.controller;
 
+import com.hrishabh.problemservice.dailychallenge.dto.DailyChallengePublicDtos.DailyChallengeContextResponse;
 import com.hrishabh.problemservice.dailychallenge.dto.DailyChallengePublicDtos.DailyChallengeRangeResponse;
 import com.hrishabh.problemservice.dailychallenge.dto.DailyChallengePublicDtos.DailyChallengeResponse;
 import com.hrishabh.problemservice.dailychallenge.service.DailyChallengeReadService;
@@ -26,6 +27,16 @@ public class DailyChallengeController {
     @GetMapping("/today")
     public ResponseEntity<DailyChallengeResponse> today() {
         return ResponseEntity.ok(readService.getToday());
+    }
+
+    /**
+     * Validates daily-challenge URL params for a problem page ({@code envId} = challenge date UTC).
+     */
+    @GetMapping("/context")
+    public ResponseEntity<DailyChallengeContextResponse> context(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam long questionId) {
+        return ResponseEntity.ok(readService.resolveContext(date, questionId));
     }
 
     @GetMapping("/{date}")

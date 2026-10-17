@@ -1,8 +1,10 @@
 package com.hrishabh.problemservice.dailychallenge.service;
 
 import com.hrishabh.problemservice.dailychallenge.dto.DailyChallengePublicDtos.DailyChallengeRangeResponse;
+import com.hrishabh.problemservice.dailychallenge.dto.DailyChallengePublicDtos.DailyChallengeContextResponse;
 import com.hrishabh.problemservice.dailychallenge.dto.DailyChallengePublicDtos.DailyChallengeResponse;
 import com.hrishabh.problemservice.dailychallenge.dto.DailyChallengePublicDtos.ProblemSummary;
+import com.hrishabh.problemservice.util.ProblemSlugUtils;
 import com.hrishabh.problemservice.dailychallenge.exception.PotdNotScheduledException;
 import com.hrishabh.problemservice.dailychallenge.model.DailyChallenge;
 import com.hrishabh.problemservice.dailychallenge.model.DailyChallengeStatus;
@@ -48,6 +50,38 @@ public class DailyChallengeReadService {
     public DailyChallengeResponse getByDate(LocalDate date) {
         validateDate(date);
         return getPublishedForDate(date).orElseThrow(PotdNotScheduledException::new);
+    }
+
+    @Transactional(readOnly = true)
+    public DailyChallengeContextResponse resolveContext(LocalDate challengeDate, long questionId) {
+        validateDate(challengeDate);
+        LocalDate today = LocalDate.now(clock);
+        boolean historical = challengeDate.isBefore(today);
+        boolean activeToday = challengeDate.equals(today);
+
+        return dailyChallengeRepository.findByChallengeDate(challengeDate)
+                .filter(dc -> dc.getStatus() == DailyChallengeStatus.PUBLISHED)
+                .map(dc -> {
+                    long expectedId = dc.getQuestion().getId();
+                    boolean valid = expectedId == questionId;
+                    return DailyChallengeContextResponse.builder()
+                            .valid(valid)
+                            .challengeDate(challengeDate)
+                            .expectedQuestionId(expectedId)
+                            .actualQuestionId(questionId)
+                            .historical(historical)
+                            .activeToday(activeToday)
+                            .problemTitle(valid ? dc.getQuestion().getQuestionTitle() : null)
+                            .build();
+                })
+                .orElseGet(() -> DailyChallengeContextResponse.builder()
+                        .valid(false)
+                        .challengeDate(challengeDate)
+                        .expectedQuestionId(0L)
+                        .actualQuestionId(questionId)
+                        .historical(historical)
+                        .activeToday(activeToday)
+                        .build());
     }
 
     @Transactional(readOnly = true)
@@ -106,7 +140,8 @@ public class DailyChallengeReadService {
                         .difficulty(question.getDifficultyLevel())
                         .primaryTopic(primaryTopic)
                         .tags(tagNames)
-                        .href("/problems/" + question.getId())
+                        .href(ProblemSlugUtils.dailyChallengePath(
+                                question.getQuestionTitle(), challenge.getChallengeDate()))
                         .build())
                 .build();
     }
