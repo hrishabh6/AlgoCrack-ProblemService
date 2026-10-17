@@ -13,12 +13,14 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan({
         "com.hrishabh.problemservice.models",
         "com.hrishabh.problemservice.dailychallenge.model",
-        "com.hrishabh.problemservice.complexity.model"
+        "com.hrishabh.problemservice.complexity.model",
+        "com.hrishabh.problemservice.semantic.model"
 })
 @EnableJpaRepositories({
         "com.hrishabh.problemservice.repository",
         "com.hrishabh.problemservice.dailychallenge.repository",
-        "com.hrishabh.problemservice.complexity.repository"
+        "com.hrishabh.problemservice.complexity.repository",
+        "com.hrishabh.problemservice.semantic.repository"
 })
 @EnableJpaAuditing
 public class ProblemServiceApplication {
